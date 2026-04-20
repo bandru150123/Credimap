@@ -62,11 +62,6 @@ exports.uploadCertificate = async (req, res) => {
 
                 console.log('\n=== GEMINI VISION OUTPUT ===');
                 console.log('Domain:', skillData.domain);
-                console.log('Subdomain:', skillData.subdomain);
-                console.log('Skills:', skillData.skills);
-                console.log('Level:', skillData.level);
-                console.log('Confidence:', skillData.confidence);
-                console.log('Reasoning:', skillData.reasoning);
                 console.log('============================\n');
 
                 const certificate = new Certificate({
@@ -93,11 +88,6 @@ exports.uploadCertificate = async (req, res) => {
 
         console.log('\n=== AI MODEL OUTPUT ===');
         console.log('Domain:', skillData.domain);
-        console.log('Subdomain:', skillData.subdomain);
-        console.log('Skills:', skillData.skills);
-        console.log('Level:', skillData.level);
-        console.log('Confidence:', skillData.confidence);
-        console.log('Reasoning:', skillData.reasoning);
         console.log('======================\n');
 
         const certificate = new Certificate({

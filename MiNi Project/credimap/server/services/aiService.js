@@ -1,7 +1,6 @@
 const { GoogleGenAI } = require('@google/genai');
-
-// Using the provided API key
-const GEMINI_API_KEY = "AIzaSyCeKTw5Fm6SJDZlG69OSVKt3HXwdwYgWP4";
+// Use environment variable for the API key for security
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 const aiService = {
@@ -23,9 +22,7 @@ You are an advanced AI system designed to analyze professional certificates and 
 
 Your task is to:
 1. Understand the meaning of the certificate (not just keywords)
-2. Identify the most relevant domain and subdomain
-3. Extract key skills
-4. Handle completely new or unseen courses intelligently
+2. Identify the most relevant domain
 
 ---
 
@@ -39,21 +36,15 @@ INSTRUCTIONS:
 
 - Do NOT rely only on exact keyword matches
 - Use semantic understanding
-- Even if the course is new, infer its closest real-world domain
+- Infer its closest real-world domain based on the subject matter
 - Be precise and professional
-- Avoid vague answers
 
 ---
 
 OUTPUT FORMAT (STRICT JSON):
 
 {
-  "domain": "Main domain (e.g., Data Science, Healthcare, Finance, Engineering, Law, Design, etc.)",
-  "subdomain": "More specific area (e.g., Machine Learning, Cardiology, Investment Banking, UI/UX, etc.)",
-  "skills": ["skill1", "skill2", "skill3", "skill4"],
-  "level": "Beginner | Intermediate | Advanced (infer from words like 'Advanced', 'Professional', etc.)",
-  "confidence": "0-100%",
-  "reasoning": "Short explanation of why this classification was chosen"
+  "domain": "Main domain (e.g., Data Science, Healthcare, Finance, Engineering, Law, Design, etc.)"
 }
 `;
 
@@ -77,24 +68,14 @@ OUTPUT FORMAT (STRICT JSON):
                 console.error('[AI Service] Failed to parse JSON response:', parseErr);
                 // Fallback struct
                 return {
-                    domain: "General",
-                    subdomain: "Professional",
-                    skills: ["Communication"],
-                    level: "Beginner",
-                    confidence: "50%",
-                    reasoning: "Failed to parse API response."
+                    domain: "General"
                 };
             }
 
         } catch (err) {
             console.error('AI Service Error:', err);
             return {
-                domain: "General",
-                subdomain: "Professional",
-                skills: ["Technical Professional"],
-                level: "Beginner",
-                confidence: "50%",
-                reasoning: "Error connecting to AI service."
+                domain: "General"
             };
         }
     },
@@ -113,21 +94,13 @@ OUTPUT FORMAT (STRICT JSON):
 
 Look at this certificate image carefully and:
 1. Read ALL visible text in the certificate
-2. Identify the domain and subdomain of the skill/course
-3. Extract key skills learned
-4. Determine the level (Beginner / Intermediate / Advanced)
-5. Output a confidence score
+2. Identify the domain of the skill/course
 
-Be precise. Even if the certificate is for a new or uncommon course, use semantic understanding to infer the closest real-world domain.
+Be precise and professional.
 
 Respond ONLY in this strict JSON format:
 {
-  "domain": "Main domain (e.g., Cloud Computing, Data Science, Cybersecurity, etc.)",
-  "subdomain": "More specific area (e.g., AWS, Machine Learning, Network Security, etc.)",
-  "skills": ["skill1", "skill2", "skill3", "skill4"],
-  "level": "Beginner | Intermediate | Advanced",
-  "confidence": "0-100%",
-  "reasoning": "Short explanation of why this classification was chosen"
+  "domain": "Main domain (e.g., Cloud Computing, Data Science, Cybersecurity, etc.)"
 }`;
 
             const response = await ai.models.generateContent({
@@ -160,24 +133,14 @@ Respond ONLY in this strict JSON format:
             } catch (parseErr) {
                 console.error('[AI Vision] Failed to parse JSON response:', parseErr);
                 return {
-                    domain: "General",
-                    subdomain: "Professional",
-                    skills: ["Communication"],
-                    level: "Beginner",
-                    confidence: "50%",
-                    reasoning: "Failed to parse Vision API response."
+                    domain: "General"
                 };
             }
 
         } catch (err) {
             console.error('[AI Vision] Error:', err);
             return {
-                domain: "General",
-                subdomain: "Professional",
-                skills: ["Technical Professional"],
-                level: "Beginner",
-                confidence: "50%",
-                reasoning: "Error calling Gemini Vision API."
+                domain: "General"
             };
         }
     }

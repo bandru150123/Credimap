@@ -310,11 +310,11 @@ const CertificatesSection = () => {
 
                                 <div className="flex-1 px-4">
                                     <div className="flex flex-wrap gap-2">
-                                        {cert.demoSkillData.skills.map((skill, idx) => (
-                                            <span key={idx} className="text-[10px] px-2 py-0.5 bg-white/5 rounded-full border border-white/10 text-gray-400">
-                                                {skill}
+                                        {cert.demoSkillData.domain && (
+                                            <span className="text-[10px] px-3 py-1 bg-blue-500/10 rounded-full border border-blue-500/20 text-blue-400 font-bold uppercase tracking-widest">
+                                                Domain: {cert.demoSkillData.domain}
                                             </span>
-                                        ))}
+                                        )}
                                     </div>
                                 </div>
 

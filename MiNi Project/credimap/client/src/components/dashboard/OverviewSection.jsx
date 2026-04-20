@@ -81,7 +81,6 @@ export default function OverviewSection() {
         if (c.demoSkillData?.domains) return c.demoSkillData.domains;
         const d = [];
         if (c.demoSkillData?.domain) d.push(c.demoSkillData.domain);
-        if (c.demoSkillData?.subdomain) d.push(c.demoSkillData.subdomain);
         return d;
     }) || [];
 
