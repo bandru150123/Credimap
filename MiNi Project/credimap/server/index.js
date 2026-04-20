@@ -3,15 +3,22 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const uploadsPath = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsPath)) {
+    fs.mkdirSync(uploadsPath, { recursive: true });
+    console.log('[Server] Created uploads directory at:', uploadsPath);
+}
+
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(uploadsPath));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -22,7 +29,6 @@ app.use('/api/user', require('./routes/user'));
 app.use('/api/portfolio', require('./routes/portfolio'));
 
 // Serve Frontend Build only if it exists
-const fs = require('fs');
 const clientBuildPath = path.join(__dirname, '../client/dist');
 
     if (fs.existsSync(clientBuildPath)) {

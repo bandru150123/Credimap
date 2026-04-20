@@ -21,7 +21,14 @@ export default function BackgroundCanvas({ theme = 'default' }) {
                 gl={{
                     antialias: true,
                     alpha: true,
-                    powerPreference: 'high-performance'
+                    powerPreference: 'high-performance',
+                    preserveDrawingBuffer: true
+                }}
+                onCreated={({ gl }) => {
+                    gl.domElement.addEventListener('webglcontextlost', (event) => {
+                        event.preventDefault();
+                        console.warn('WebGL context lost. Attempting to restore...');
+                    }, false);
                 }}
                 dpr={[1, 2]}
             >

@@ -87,11 +87,11 @@ export default function PortfolioPage() {
                                         Professional Portfolio
                                     </motion.span>
                                     <h1 className="text-6xl md:text-[8rem] font-black tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/20">
-                                        {user.name.split(' ')[0]}
+                                        {user?.name?.split(' ')[0] || 'Portfolio'}
                                     </h1>
                                 </div>
                                 <p className="text-2xl md:text-4xl text-gray-400 font-light tracking-[0.2em] uppercase max-w-3xl mx-auto">
-                                    {user.profileDetails?.title || user.profileDetails?.headline || 'Creative Developer'}
+                                    {user?.profileDetails?.title || user?.profileDetails?.headline || 'Creative Developer'}
                                 </p>
                             </motion.div>
 
@@ -111,7 +111,7 @@ export default function PortfolioPage() {
                                         <Linkedin className="w-6 h-6" />
                                     </a>
                                 )}
-                                <a href={`mailto:${user.email}`} className="hover:text-blue-400 transition-all hover:scale-110">
+                                <a href={`mailto:${user?.email || ''}`} className="hover:text-blue-400 transition-all hover:scale-110">
                                     <Mail className="w-6 h-6" />
                                 </a>
                             </motion.div>
@@ -143,7 +143,7 @@ export default function PortfolioPage() {
                                     </h2>
                                 </div>
                                 <p className="text-2xl text-gray-400 leading-relaxed font-light">
-                                    {user.profileDetails?.bio || 'Professional journey focused on delivering excellence through code and design.'}
+                                    {user?.profileDetails?.bio || 'Professional journey focused on delivering excellence through code and design.'}
                                 </p>
                             </motion.div>
 
@@ -188,7 +188,7 @@ export default function PortfolioPage() {
                                 </div>
 
                                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                    {certificates.map((cert, i) => (
+                                    {(certificates || []).filter(Boolean).map((cert, i) => (
                                         <motion.div
                                             key={cert._id}
                                             initial={{ opacity: 0, scale: 0.9 }}
@@ -207,12 +207,12 @@ export default function PortfolioPage() {
                                                 </div>
 
                                                 <div className="space-y-1">
-                                                    <h3 className="text-2xl font-black uppercase tracking-tight leading-tight">{cert.name}</h3>
+                                                    <h3 className="text-2xl font-black uppercase tracking-tight leading-tight">{cert?.name || 'Untitled Certificate'}</h3>
                                                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Skill Validation Complete</p>
                                                 </div>
 
                                                 <div className="flex flex-wrap gap-2 pt-4 border-t border-white/5">
-                                                    {cert.demoSkillData.skills.slice(0, 3).map(skill => (
+                                                    {(cert?.demoSkillData?.skills || []).slice(0, 3).map(skill => (
                                                         <span key={skill} className="text-[9px] font-black px-2 py-1 bg-white/5 rounded-full border border-white/10 uppercase tracking-widest text-blue-400">
                                                             {skill}
                                                         </span>
@@ -239,7 +239,7 @@ export default function PortfolioPage() {
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-10">
-                                {projects.map((project, i) => (
+                                {(projects || []).filter(Boolean).map((project, i) => (
                                     <motion.div
                                         key={project._id}
                                         initial={{ opacity: 0, y: 40 }}
@@ -251,7 +251,7 @@ export default function PortfolioPage() {
                                         <div className="p-10 space-y-6">
                                             <div className="flex justify-between items-start">
                                                 <div className="space-y-1">
-                                                    <h3 className="text-3xl font-black group-hover:text-blue-400 transition-colors uppercase tracking-widest">{project.name}</h3>
+                                                    <h3 className="text-3xl font-black group-hover:text-blue-400 transition-colors uppercase tracking-widest">{project?.name || 'Untitled Project'}</h3>
                                                     <div className="w-8 h-1 bg-blue-500/50 group-hover:w-16 transition-all duration-500"></div>
                                                 </div>
                                                 <div className="flex gap-4 p-2 bg-white/5 rounded-2xl border border-white/5">
@@ -261,7 +261,7 @@ export default function PortfolioPage() {
                                             </div>
                                             <p className="text-gray-400 leading-relaxed text-lg font-light">{project.description}</p>
                                             <div className="flex flex-wrap gap-3 pt-4">
-                                                {project.techStack.map(tech => (
+                                                {(project?.techStack || []).map(tech => (
                                                     <span key={tech} className="text-[10px] font-black px-3 py-1.5 bg-white/5 text-gray-400 rounded-full border border-white/10 uppercase tracking-widest group-hover:border-blue-500/20">
                                                         {tech}
                                                     </span>
@@ -296,7 +296,7 @@ export default function PortfolioPage() {
                                                 <div className="flex justify-between items-center">
                                                     <p className="text-blue-400 font-bold uppercase tracking-widest text-xs">{exp.company}</p>
                                                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/5">
-                                                        {new Date(exp.startDate).getFullYear()} — {exp.current ? 'Present' : new Date(exp.endDate).getFullYear()}
+                                                        {exp.startDate ? new Date(exp.startDate).getFullYear() : 'N/A'} — {exp.current ? 'Present' : (exp.endDate ? new Date(exp.endDate).getFullYear() : 'N/A')}
                                                     </p>
                                                 </div>
                                                 <p className="text-gray-400 leading-relaxed font-light text-sm pt-2">{exp.description}</p>
@@ -327,7 +327,7 @@ export default function PortfolioPage() {
                                                 <div className="flex justify-between items-center">
                                                     <p className="text-indigo-400 font-bold uppercase tracking-widest text-xs">{edu.institution}</p>
                                                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/5">
-                                                        {new Date(edu.startDate).getFullYear()} — {new Date(edu.endDate).getFullYear()}
+                                                        {edu.startDate ? new Date(edu.startDate).getFullYear() : 'N/A'} — {edu.endDate ? new Date(edu.endDate).getFullYear() : 'N/A'}
                                                     </p>
                                                 </div>
                                                 <p className="text-gray-400 leading-relaxed font-light text-sm pt-2">{edu.field}</p>
@@ -340,11 +340,11 @@ export default function PortfolioPage() {
 
                         {/* FOOTER / CONTACT */}
                         <footer className="pt-32 pb-20 border-t border-white/10 text-center space-y-6">
-                            <p className="text-gray-500">© {new Date().getFullYear()} {user.name}. Generated by CrediTrack.</p>
+                            <p className="text-gray-500">© {new Date().getFullYear()} {user?.name || 'User'}. Generated by CrediTrack.</p>
                             <div className="flex justify-center gap-8 text-sm font-bold tracking-widest uppercase text-gray-400">
-                                <a href={`mailto:${user.email}`} className="hover:text-blue-400 transition-colors">Email</a>
-                                {user.profileDetails?.socialLinks?.linkedin && <a href={user.profileDetails.socialLinks.linkedin} className="hover:text-blue-400 transition-colors">LinkedIn</a>}
-                                {user.profileDetails?.socialLinks?.github && <a href={user.profileDetails.socialLinks.github} className="hover:text-blue-400 transition-colors">GitHub</a>}
+                                <a href={`mailto:${user?.email || ''}`} className="hover:text-blue-400 transition-colors">Email</a>
+                                {user?.profileDetails?.socialLinks?.linkedin && <a href={user.profileDetails.socialLinks.linkedin} className="hover:text-blue-400 transition-colors">LinkedIn</a>}
+                                {user?.profileDetails?.socialLinks?.github && <a href={user.profileDetails.socialLinks.github} className="hover:text-blue-400 transition-colors">GitHub</a>}
                             </div>
                         </footer>
                     </main>

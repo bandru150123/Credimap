@@ -51,7 +51,7 @@ OUTPUT FORMAT (STRICT JSON):
             console.log('[AI Service] Prompting Gemini...');
 
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-flash-latest',
                 contents: prompt,
                 config: {
                     responseMimeType: "application/json",
@@ -104,7 +104,7 @@ Respond ONLY in this strict JSON format:
 }`;
 
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-flash-latest',
                 contents: [
                     {
                         role: 'user',
