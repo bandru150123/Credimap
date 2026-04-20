@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Award, FileCheck, Briefcase, Zap, TrendingUp, Star, Sparkles } from 'lucide-react';
+import { Award, FileCheck, Briefcase, Zap, TrendingUp, Star, Sparkles, Globe, Lock, Copy, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 import {
     BarChart,
     Bar,
@@ -25,11 +26,44 @@ import {
  * Displays analytics cards and skills distribution with high-fidelity charts
  */
 export default function OverviewSection() {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
+    
+    // Public visibility state
+    const [isPublic, setIsPublic] = useState(user?.isPublic || false);
+    const [publicId, setPublicId] = useState(user?.publicId || null);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const skillsCount = user?.manualSkills?.length || 0;
     const certsCount = user?.certificates?.length || 0;
     const projectsCount = user?.projects?.length || 0;
+
+    const handleTogglePublic = async () => {
+        setIsUpdating(true);
+        try {
+            if (isPublic) {
+                const res = await axios.post(`/api/portfolio/make-private/${user._id}`);
+                setIsPublic(res.data.isPublic);
+                updateUser({ isPublic: res.data.isPublic });
+            } else {
+                const res = await axios.post(`/api/portfolio/make-public/${user._id}`);
+                setIsPublic(res.data.isPublic);
+                setPublicId(res.data.publicId);
+                updateUser({ isPublic: res.data.isPublic, publicId: res.data.publicId });
+            }
+        } catch (err) {
+            console.error('Failed to toggle visibility', err);
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const copyToClipboard = () => {
+        const url = `${window.location.origin}/p/${publicId}`;
+        navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     // Process manual skills for the bar chart
     const skillData = user?.manualSkills?.slice(0, 6).map(s => {
@@ -44,10 +78,10 @@ export default function OverviewSection() {
     // Aggregated Skill Domains Distribution
     const manualCategories = user?.manualSkills?.map(s => s.category) || [];
     const certDomains = user?.certificates?.flatMap(c => {
-        if (c.demoSkillData.domains) return c.demoSkillData.domains;
+        if (c.demoSkillData?.domains) return c.demoSkillData.domains;
         const d = [];
-        if (c.demoSkillData.domain) d.push(c.demoSkillData.domain);
-        if (c.demoSkillData.subdomain) d.push(c.demoSkillData.subdomain);
+        if (c.demoSkillData?.domain) d.push(c.demoSkillData.domain);
+        if (c.demoSkillData?.subdomain) d.push(c.demoSkillData.subdomain);
         return d;
     }) || [];
 
@@ -76,16 +110,55 @@ export default function OverviewSection() {
 
     return (
         <div className="space-y-10">
-            {/* Header */}
-            <div>
-                <motion.h2
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="text-4xl font-bold text-white mb-2"
+            {/* Header & Public Toggle */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <motion.h2
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="text-4xl font-bold text-white mb-2"
+                    >
+                        Welcome back, <span className="text-gradient">{user?.name}</span>
+                    </motion.h2>
+                    <p className="text-gray-400">Your professional portfolio is performing at peak efficiency.</p>
+                </div>
+                
+                {/* Public Visibility Toggle UI */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="glass-morphism p-4 rounded-2xl border border-white/10 flex flex-col items-end gap-3 min-w-[300px]"
                 >
-                    Welcome back, <span className="text-gradient">{user?.name}</span>
-                </motion.h2>
-                <p className="text-gray-400">Your professional portfolio is performing at peak efficiency.</p>
+                    <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-2">
+                            {isPublic ? <Globe className="w-5 h-5 text-emerald-400" /> : <Lock className="w-5 h-5 text-gray-500" />}
+                            <span className={`text-sm font-bold uppercase tracking-widest ${isPublic ? 'text-emerald-400' : 'text-gray-500'}`}>
+                                {isPublic ? 'Publicly Visible' : 'Private Portfolio'}
+                            </span>
+                        </div>
+                        <button
+                            onClick={handleTogglePublic}
+                            disabled={isUpdating}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isPublic ? 'bg-emerald-500' : 'bg-gray-700'}`}
+                        >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isPublic ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                    </div>
+                    
+                    {isPublic && publicId && (
+                        <div className="w-full flex items-center justify-between bg-black/40 rounded-xl p-2 border border-white/5 group">
+                            <span className="text-xs text-gray-400 font-mono truncate px-2">{window.location.host}/p/{publicId}</span>
+                            <button 
+                                onClick={copyToClipboard}
+                                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white"
+                                title="Copy public link"
+                            >
+                                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                            </button>
+                        </div>
+                    )}
+                </motion.div>
             </div>
 
             {/* Stats Grid */}

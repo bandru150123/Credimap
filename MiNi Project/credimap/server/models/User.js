@@ -62,6 +62,8 @@ const userSchema = new mongoose.Schema({
     }],
     portfolioUrl: String,
     deploymentStatus: { type: String, enum: ['draft', 'published', 'deployed'], default: 'draft' },
+    isPublic: { type: Boolean, default: false },
+    publicId: { type: String, sparse: true, unique: true },
     createdAt: { type: Date, default: Date.now }
 });
 

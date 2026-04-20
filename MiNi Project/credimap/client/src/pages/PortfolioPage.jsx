@@ -11,23 +11,36 @@ import { Github, Linkedin, Twitter, Mail, ExternalLink, Award, Book, Briefcase, 
  * Features: 3D background, animated sections, glassmorphism, recruiter-grade layout
  */
 export default function PortfolioPage() {
-    const { id } = useParams();
+    const { id, publicId } = useParams();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [errorMsg, setErrorMsg] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await axios.get(`/api/public/${id}`);
+                let res;
+                if (publicId) {
+                    res = await axios.get(`/api/public/portfolio/${publicId}`);
+                } else {
+                    res = await axios.get(`/api/public/${id}`);
+                }
                 setData(res.data);
             } catch (err) {
                 console.error('Failed to fetch portfolio data:', err);
+                if (err.response?.status === 403) {
+                    setErrorMsg('This portfolio is private or not found.');
+                } else if (err.response?.status === 404) {
+                    setErrorMsg('Portfolio Not Found');
+                } else {
+                    setErrorMsg('An error occurred while fetching the portfolio.');
+                }
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
-    }, [id]);
+    }, [id, publicId]);
 
     const { user, projects, certificates } = data || {};
 
@@ -43,9 +56,13 @@ export default function PortfolioPage() {
                 <div className="min-h-screen flex items-center justify-center relative z-20">
                     <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin shadow-[0_0_20px_rgba(59,130,246,0.3)]"></div>
                 </div>
-            ) : !data ? (
-                <div className="min-h-screen flex items-center justify-center text-white relative z-20">
-                    <h1 className="text-2xl font-bold glass-morphism p-8 rounded-[2rem]">Portfolio Not Found</h1>
+            ) : errorMsg || !data ? (
+                <div className="min-h-screen flex flex-col items-center justify-center text-white relative z-20">
+                    <div className="glass-morphism p-12 rounded-[2rem] text-center border border-red-500/20 max-w-md">
+                        <User className="w-16 h-16 text-red-500 mx-auto mb-6 opacity-50" />
+                        <h1 className="text-2xl font-black uppercase tracking-widest text-red-400 mb-2">Access Denied</h1>
+                        <p className="text-gray-400">{errorMsg || 'Portfolio Not Found'}</p>
+                    </div>
                 </div>
             ) : (
                 <>

@@ -19,18 +19,19 @@ app.use('/api/public', require('./routes/public'));
 app.use('/api/projects', require('./routes/projects'));
 app.use('/api/certificates', require('./routes/certificates'));
 app.use('/api/user', require('./routes/user'));
+app.use('/api/portfolio', require('./routes/portfolio'));
 
 // Serve Frontend Build only if it exists
 const fs = require('fs');
 const clientBuildPath = path.join(__dirname, '../client/dist');
 
-if (fs.existsSync(clientBuildPath)) {
-    console.log('[Server] Serving frontend from:', clientBuildPath);
-    app.use(express.static(clientBuildPath));
-    app.get('*', (req, res) => {
-        res.sendFile(path.join(clientBuildPath, 'index.html'));
-    });
-} else {
+    if (fs.existsSync(clientBuildPath)) {
+        console.log('[Server] Serving frontend from:', clientBuildPath);
+        app.use(express.static(clientBuildPath));
+        app.get('/*path', (req, res) => {
+            res.sendFile(path.join(clientBuildPath, 'index.html'));
+        });
+    } else {
     console.log('[Server] Frontend build not found. Running in API-only mode.');
     app.get('/', (req, res) => {
         res.json({ 

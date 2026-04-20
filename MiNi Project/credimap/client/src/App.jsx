@@ -37,6 +37,7 @@ function AppContent() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/portfolio/:id" element={<PortfolioPage />} />
+                    <Route path="/p/:publicId" element={<PortfolioPage />} />
                     <Route
                         path="/dashboard"
                         element={

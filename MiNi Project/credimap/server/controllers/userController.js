@@ -216,3 +216,26 @@ exports.getPublicProfile = async (req, res) => {
         res.status(500).send('Server Error');
     }
 };
+
+exports.getSharedPortfolio = async (req, res) => {
+    try {
+        const user = await User.findOne({ publicId: req.params.publicId }).select('-password -email -extractedSkills');
+        if (!user) return res.status(404).json({ msg: 'Portfolio not found' });
+
+        if (!user.isPublic) {
+            return res.status(403).json({ msg: 'This portfolio is private or not found.' });
+        }
+
+        const projects = await Project.find({ userId: user._id }).sort({ createdAt: -1 });
+        const certificates = await Certificate.find({ userId: user._id }).select('-extractedText'); // Exclude raw OCR text
+
+        res.json({
+            user,
+            projects,
+            certificates
+        });
+    } catch (err) {
+        console.error('Get Shared Portfolio Error:', err.message);
+        res.status(500).send('Server Error');
+    }
+};
