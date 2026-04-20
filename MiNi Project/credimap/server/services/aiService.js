@@ -1,147 +1,120 @@
 const { GoogleGenAI } = require('@google/genai');
-// Use environment variable for the API key for security
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+
+// Initialize with the package standard
+const ai = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY
+});
+
+/**
+ * Helper to retry AI calls on 503 (Service Unavailable) or 429 (Rate Limit)
+ * This is CRITICAL for managing free-tier quotas and temporary server spikes.
+ */
+async function withRetry(fn, retries = 3, delay = 2000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            return await fn();
+        } catch (error) {
+            // Log the raw error for debugging 503s
+            const status = error.status || (error.response && error.response.status);
+            const isRetryable = status === 503 || status === 429 || error.message?.includes('503');
+            
+            if (isRetryable && i < retries - 1) {
+                console.log(`[AI Retry] Google is busy (Attempt ${i + 1}/${retries}). Retrying in ${delay / 1000}s...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2; 
+                continue;
+            }
+            throw error;
+        }
+    }
+}
 
 const aiService = {
+    /**
+     * Extracts skills and metadata from certificate text
+     */
     async extractSkillsFromText(text) {
         try {
-            console.log('[AI Service] Received text length:', text.length);
+            if (!text || text.trim().length < 10) {
+                return { domain: 'General', skills: [] };
+            }
 
             // Clean text
-            let cleanedText = text
-                .replace(/\0/g, '')
-                .replace(/\s+/g, ' ')
-                .trim();
-            cleanedText = cleanedText.replace(/[^\x20-\x7E\n\t]/g, '');
+            const cleanedText = text.replace(/\0/g, '').replace(/\s+/g, ' ').trim().substring(0, 3000);
 
-            console.log('[AI Service] Cleaned text preview:', cleanedText.substring(0, 200));
-
-            const prompt = `
-You are an advanced AI system designed to analyze professional certificates and classify them intelligently.
-
-Your task is to:
-1. Understand the meaning of the certificate (not just keywords)
-2. Identify the most relevant domain
-
----
-
-INPUT:
-Certificate Text:
-"${cleanedText}"
-
----
-
-INSTRUCTIONS:
-
-- Do NOT rely only on exact keyword matches
-- Use semantic understanding
-- Infer its closest real-world domain based on the subject matter
-- Be precise and professional
-
----
-
-OUTPUT FORMAT (STRICT JSON):
-
-{
-  "domain": "Main domain (e.g., Data Science, Healthcare, Finance, Engineering, Law, Design, etc.)"
-}
-`;
+            const prompt = `Analyze this certificate text and extract the professional domain. 
+            Return ONLY a JSON object in this format: {"domain": "Domain Name", "skills": ["Skill1", "Skill2"]}.
+            Text: ${cleanedText}`;
 
             console.log('[AI Service] Prompting Gemini...');
 
-            const response = await ai.models.generateContent({
+            const response = await withRetry(() => ai.models.generateContent({
                 model: 'gemini-flash-latest',
                 contents: prompt,
                 config: {
                     responseMimeType: "application/json",
                 }
-            });
+            }));
 
-            const responseText = response.text;
-            console.log('[AI Service] Gemini Raw Response:', responseText);
-
-            try {
-                const result = JSON.parse(responseText);
-                return result;
-            } catch (parseErr) {
-                console.error('[AI Service] Failed to parse JSON response:', parseErr);
-                // Fallback struct
-                return {
-                    domain: "General"
-                };
-            }
-
-        } catch (err) {
-            console.error('AI Service Error:', err);
+            // The @google/genai package returns response directly as text in some versions
+            const responseText = response.text || response;
+            const result = JSON.parse(responseText);
+            
             return {
-                domain: "General"
+                domain: result.domain || 'General',
+                skills: result.skills || []
             };
+        } catch (error) {
+            console.error('AI Service Error:', error.message);
+            return { domain: 'General', skills: [] };
         }
     },
 
     /**
-     * Sends the certificate image directly to Gemini Vision for skill extraction.
-     * Used as a fallback when Tesseract OCR produces insufficient text.
-     * @param {string} base64Image - Base64-encoded image string
-     * @param {string} mimeType - MIME type of the image (e.g. 'image/jpeg')
+     * Full Multi-modal extraction (Image directly to Gemini)
      */
     async extractSkillsFromImage(base64Image, mimeType) {
         try {
+            const prompt = `This is a certificate image. Please identify:
+            1. The main professional domain (e.g., Web Development, Cloud, Marketing).
+            2. Top 5 specific technical skills validated by this certificate.
+            
+            Return ONLY valid JSON: {"domain": "Text", "skills": ["Skill1", "Skill2"]}`;
+
             console.log('[AI Vision] Sending image directly to Gemini Vision...');
 
-            const prompt = `You are an advanced AI system designed to analyze professional certificates and classify them intelligently.
-
-Look at this certificate image carefully and:
-1. Read ALL visible text in the certificate
-2. Identify the domain of the skill/course
-
-Be precise and professional.
-
-Respond ONLY in this strict JSON format:
-{
-  "domain": "Main domain (e.g., Cloud Computing, Data Science, Cybersecurity, etc.)"
-}`;
-
-            const response = await ai.models.generateContent({
+            const response = await withRetry(() => ai.models.generateContent({
                 model: 'gemini-flash-latest',
                 contents: [
                     {
                         role: 'user',
                         parts: [
+                            { text: prompt },
                             {
                                 inlineData: {
                                     mimeType: mimeType,
                                     data: base64Image
                                 }
-                            },
-                            { text: prompt }
+                            }
                         ]
                     }
                 ],
                 config: {
-                    responseMimeType: 'application/json'
+                    responseMimeType: "application/json",
                 }
-            });
+            }));
 
-            const responseText = response.text;
-            console.log('[AI Vision] Gemini Vision Raw Response:', responseText);
-
-            try {
-                const result = JSON.parse(responseText);
-                return result;
-            } catch (parseErr) {
-                console.error('[AI Vision] Failed to parse JSON response:', parseErr);
-                return {
-                    domain: "General"
-                };
-            }
-
-        } catch (err) {
-            console.error('[AI Vision] Error:', err);
+            const responseText = response.text || response;
+            const result = JSON.parse(responseText);
+            console.log('[AI Vision] Gemini Vision Raw Response:', JSON.stringify(result, null, 2));
+            
             return {
-                domain: "General"
+                domain: result.domain || 'General',
+                skills: result.skills || []
             };
+        } catch (error) {
+            console.error('[AI Vision] Error:', error.message);
+            return { domain: 'General', skills: [] };
         }
     }
 };
